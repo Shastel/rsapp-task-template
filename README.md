@@ -1,7 +1,7 @@
-# JS EDU
+# TASK NAME
 
 ## History
-s
+
 ## Task
 
 For example:
