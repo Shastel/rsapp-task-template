@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha test",
-    "postinstall": "node scripts/postinstall.js"
+    "postinstall": "node scripts/postinstall.js",
+    "rename": "node scripts/rename.js"
   },
   "engines": {
     "node": "<=12"
@@ -25,5 +26,8 @@
     "colors": "^1.4.0",
     "mocha": "^6.2.2",
     "semver": "^6.3.0"
+  },
+  "devDependencies": {
+    "is-valid-npm-name": "git+ssh://git@github.com:Shastel/is-valid-npm-name.git"
   }
 }
