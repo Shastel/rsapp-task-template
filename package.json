@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha test",
-    "postinstall": "node postinstall.js"
+    "postinstall": "node scripts/postinstall.js"
   },
   "engines": {
-    "node": "<=10"
+    "node": "<=12"
   },
   "repository": {
     "type": "git",
