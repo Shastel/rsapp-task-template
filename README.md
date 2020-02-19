@@ -22,7 +22,7 @@ Write your code in `src/index.js.
 
 ## Submit to [rs app](https://app.rs.school)
 1. Open [rs app](https://app.rs.school) and login
-2. Go to [submit task page](https://app.rs.school/course/submit-task?course=#)
+2. Go to [submit task page](https://app.rs.school/course/student/auto-test?course=rs-2020-q1)
 3. Select your task (<%TASK_NAME%>)
 4. Press the submit button and enjoy
 
