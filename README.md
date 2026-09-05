@@ -27,5 +27,5 @@ Write your code in `/src/index.js`.
 4. Press the submit button
 
 ### Notes
-1. This template targets Node.js 20 or newer and the npm version bundled with it.
+1. This template targets Node.js 20 or newer.
 2. Each test case is limited to 30 seconds.

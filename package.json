@@ -8,8 +8,7 @@
     "rename": "node ./scripts/rename.js"
   },
   "engines": {
-    "node": ">=20",
-    "npm": ">=10"
+    "node": ">=20"
   },
   "repository": {
     "type": "git",
