@@ -1,5 +1,6 @@
-const assert = require('assert');
+const test = require('node:test');
+const assert = require('node:assert/strict');
 
-it('true should be true', () => {
+test('true should be true', () => {
   assert.equal(true, true);
 });
