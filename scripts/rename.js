@@ -1,6 +1,6 @@
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { readFile, writeFile, access } = require('node:fs/promises');
+const { readFile, writeFile } = require('node:fs/promises');
 const { createInterface } = require('node:readline/promises');
 const process = require('node:process');
 
@@ -86,8 +86,6 @@ async function onName (taskName) {
  await writeFile(PKG_JSON_PATH, `${JSON.stringify(packageJson, null, 2)}\n`);
 
  try {
-   await access(PKG_LOCK_PATH);
-
    const packageLockString = await readFile(PKG_LOCK_PATH, 'utf8');
    const packageLockJson = JSON.parse(packageLockString);
 
@@ -95,6 +93,10 @@ async function onName (taskName) {
 
    await writeFile(PKG_LOCK_PATH, `${JSON.stringify(packageLockJson, null, 2)}\n`);
  } catch (error) {
+   if (error.code !== 'ENOENT') {
+     throw error;
+   }
+
    console.warn('WARN: package-lock.json was not updated');
  }
 
