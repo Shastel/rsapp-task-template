@@ -1,98 +1,151 @@
-const readline = require('readline');
-const { promisify } = require('util');
-const fs = require('fs');
-const cp = require('child_process');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
+const { existsSync } = require('node:fs');
+const { readFile, writeFile } = require('node:fs/promises');
+const { createInterface } = require('node:readline/promises');
+const process = require('node:process');
 
-const colors = require('colors');
 const isValidNpmName = require('is-valid-npm-name');
 
-const README_PATH = './README.md';
-const PCG_JSON_PATH = './package.json';
-const PCG_LOCK_PATH = './package-lock.json';
-
-const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
+const REPOSITORY_ROOT = path.resolve(__dirname, '..');
+const README_PATH = path.join(REPOSITORY_ROOT, 'README.md');
+const PKG_JSON_PATH = path.join(REPOSITORY_ROOT, 'package.json');
+const PKG_LOCK_PATH = path.join(REPOSITORY_ROOT, 'package-lock.json');
 
 const equals = (a, b) => a === b;
+const toLowerCase = (value) => value.trim().toLowerCase();
+const isNoAnswer = (answer) => ['n', 'no'].some((value) => equals(value, answer));
+const isYesAnswer = (answer) => ['y', 'yes'].some((value) => equals(value, answer));
 
 function validateYesNo (answer) {
-  const lowerCasedAnswer = answer.toLowerCase();
+ const lowerCasedAnswer = toLowerCase(answer);
 
-  return ['n', 'y', 'no', 'yes'].some((v => v === lowerCasedAnswer)) || 'Please enter one of: \'y\', \'yes\', \'n\', \'no\'\n';
+ return ['n', 'y', 'no', 'yes'].some((value) => equals(value, lowerCasedAnswer))
+   || 'Please enter one of: \'y\', \'yes\', \'n\', \'no\'\n';
 }
 
 function commit (answer) {
-  if (['n', 'no'].some((v => v === answer))) {
-    console.log('Done'.underline.green);
-    return;
-  }
+ if (isNoAnswer(toLowerCase(answer))) {
+   console.log('Done');
+   return;
+ }
 
-  try {
-    cp.execSync(`git add '${README_PATH}' '${PCG_JSON_PATH}' '${PCG_LOCK_PATH}'`, { stdio: 'inherit' });
-    cp.execSync("git commit -m 'Update task name'", { stdio: 'inherit' });
+ try {
+   const filesToCommit = [README_PATH, PKG_JSON_PATH];
 
-  } catch (e) {
-    return console.log('unexpected error'.underline.red);
-  }
+   if (existsSync(PKG_LOCK_PATH)) {
+     filesToCommit.push(PKG_LOCK_PATH);
+   }
 
-  console.log('Done'.underline.green);
+   execFileSync(
+     'git',
+     ['-C', REPOSITORY_ROOT, 'add', ...filesToCommit],
+     { stdio: 'inherit' }
+   );
+   execFileSync(
+     'git',
+     ['-C', REPOSITORY_ROOT, 'commit', '-m', 'Update task name'],
+     { stdio: 'inherit' }
+   );
+ } catch (e) {
+   console.error('Unexpected error');
+   return;
+ }
+
+ console.log('Done');
 }
 
-function ask (question, validityCheck, onSuccess) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+async function ask (question, validityCheck) {
+ const rl = createInterface({
+   input: process.stdin,
+   output: process.stdout
+ });
 
+ try {
+   while (true) {
+     const answer = await rl.question(question);
+     const validationResult = validityCheck(answer);
 
-  rl.question(question, async (answer) => {
-    rl.close();
+     if (validationResult === true) {
+       return answer;
+     }
 
-    const validationResult = validityCheck(answer);
-
-    if (true !== validationResult) {
-      console.log(validationResult.underline.red);
-      return ask(question, validityCheck, onSuccess);
-    }
-
-    onSuccess(answer);
-  });
+     console.error(validationResult);
+   }
+ } finally {
+   rl.close();
+ }
 }
 
 const taskNameRegExp = /<%TASK_NAME%>/g;
 
-async function onName (taskName) {
-    /* Update README.md */
-    const readme = await readFile(README_PATH, 'utf8');
-
-    const newReadMe = readme.replace(taskNameRegExp, taskName);
-
-    await writeFile(README_PATH, newReadMe);
-
-    /* Update package.json */
-    const packageString = await readFile(PCG_JSON_PATH, 'utf8');
-    const package = JSON.parse(packageString);
-
-    package.name = taskName;
-
-    await writeFile(PCG_JSON_PATH, JSON.stringify(package, null, 2));
-
-    /* Update package-lock.json */
-    /* 📓 For some reason lock file may not exist, but it is kind of ok */
-    try {
-      const packageString = await readFile(PCG_LOCK_PATH, 'utf8');
-      const package = JSON.parse(packageString);
-
-      package.name = taskName;
-
-      await writeFile(PCG_LOCK_PATH, JSON.stringify(package, null, 2));
-    } catch (e) {
-      console.log('WARN: update of package-lock is failed'.yellow);
-    }
-
-    console.log(`Success, name of the task updated to: ${taskName}`.green);
-
-    ask('Whould you like to commit the changes? (yes/no)\n', validateYesNo, commit);
+function updatePackageName (packageJson, taskName) {
+  packageJson.name = taskName;
 }
 
-ask('Entet name of the task, it should be a valid npm package name\n', isValidNpmName, onName);
+function updatePackageLockName (packageLockJson, taskName) {
+  if ('name' in packageLockJson) {
+    packageLockJson.name = taskName;
+  }
+
+  if (packageLockJson.packages && packageLockJson.packages[''] && 'name' in packageLockJson.packages['']) {
+    packageLockJson.packages[''].name = taskName;
+  }
+}
+
+async function onName (taskName) {
+ const readme = await readFile(README_PATH, 'utf8');
+ const updatedReadme = readme.replace(taskNameRegExp, taskName);
+
+ await writeFile(README_PATH, updatedReadme);
+
+ const packageString = await readFile(PKG_JSON_PATH, 'utf8');
+ const packageJson = JSON.parse(packageString);
+
+ updatePackageName(packageJson, taskName);
+
+ await writeFile(PKG_JSON_PATH, `${JSON.stringify(packageJson, null, 2)}\n`);
+
+ try {
+   const packageLockString = await readFile(PKG_LOCK_PATH, 'utf8');
+   const packageLockJson = JSON.parse(packageLockString);
+
+   updatePackageLockName(packageLockJson, taskName);
+
+   await writeFile(PKG_LOCK_PATH, `${JSON.stringify(packageLockJson, null, 2)}\n`);
+ } catch (error) {
+   if (error.code !== 'ENOENT') {
+     throw error;
+   }
+
+   console.warn('WARN: package-lock.json was not updated');
+ }
+
+ console.log(`Success, task name updated to: ${taskName}`);
+
+ const commitAnswer = await ask('Would you like to commit the changes? (yes/no)\n', validateYesNo);
+
+ commit(commitAnswer);
+}
+
+async function main () {
+ const taskName = await ask(
+   'Enter the task name. It should be a valid npm package name.\n',
+   isValidNpmName
+ );
+
+ await onName(taskName);
+}
+
+module.exports = {
+ updatePackageLockName,
+ updatePackageName,
+ validateYesNo
+};
+
+if (require.main === module) {
+ main().catch((error) => {
+   console.error(error);
+   process.exitCode = 1;
+ });
+}
