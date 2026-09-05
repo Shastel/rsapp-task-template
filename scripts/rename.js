@@ -114,9 +114,7 @@ async function onName (taskName) {
 
  const commitAnswer = await ask('Would you like to commit the changes? (yes/no)\n', validateYesNo);
 
- if (isYesAnswer(toLowerCase(commitAnswer)) || isNoAnswer(toLowerCase(commitAnswer))) {
-   commit(commitAnswer);
- }
+ commit(commitAnswer);
 }
 
 async function main () {
