@@ -97,6 +97,9 @@ async function onName (taskName) {
    const packageLockJson = JSON.parse(packageLockString);
 
    packageLockJson.name = taskName;
+   if (packageLockJson.packages && packageLockJson.packages['']) {
+     packageLockJson.packages[''].name = taskName;
+   }
 
    await writeFile(PKG_LOCK_PATH, `${JSON.stringify(packageLockJson, null, 2)}\n`);
  } catch (error) {
