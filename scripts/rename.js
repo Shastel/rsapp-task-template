@@ -79,6 +79,20 @@ async function ask (question, validityCheck) {
 
 const taskNameRegExp = /<%TASK_NAME%>/g;
 
+function updatePackageName (packageJson, taskName) {
+  packageJson.name = taskName;
+}
+
+function updatePackageLockName (packageLockJson, taskName) {
+  if ('name' in packageLockJson) {
+    packageLockJson.name = taskName;
+  }
+
+  if (packageLockJson.packages && packageLockJson.packages[''] && 'name' in packageLockJson.packages['']) {
+    packageLockJson.packages[''].name = taskName;
+  }
+}
+
 async function onName (taskName) {
  const readme = await readFile(README_PATH, 'utf8');
  const updatedReadme = readme.replace(taskNameRegExp, taskName);
@@ -88,7 +102,7 @@ async function onName (taskName) {
  const packageString = await readFile(PKG_JSON_PATH, 'utf8');
  const packageJson = JSON.parse(packageString);
 
- packageJson.name = taskName;
+ updatePackageName(packageJson, taskName);
 
  await writeFile(PKG_JSON_PATH, `${JSON.stringify(packageJson, null, 2)}\n`);
 
@@ -96,10 +110,7 @@ async function onName (taskName) {
    const packageLockString = await readFile(PKG_LOCK_PATH, 'utf8');
    const packageLockJson = JSON.parse(packageLockString);
 
-   packageLockJson.name = taskName;
-   if (packageLockJson.packages && packageLockJson.packages['']) {
-     packageLockJson.packages[''].name = taskName;
-   }
+   updatePackageLockName(packageLockJson, taskName);
 
    await writeFile(PKG_LOCK_PATH, `${JSON.stringify(packageLockJson, null, 2)}\n`);
  } catch (error) {
@@ -126,7 +137,15 @@ async function main () {
  await onName(taskName);
 }
 
-main().catch((error) => {
- console.error(error);
- process.exitCode = 1;
-});
+module.exports = {
+ updatePackageLockName,
+ updatePackageName,
+ validateYesNo
+};
+
+if (require.main === module) {
+ main().catch((error) => {
+   console.error(error);
+   process.exitCode = 1;
+ });
+}
