@@ -1,5 +1,6 @@
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const { existsSync } = require('node:fs');
 const { readFile, writeFile } = require('node:fs/promises');
 const { createInterface } = require('node:readline/promises');
 const process = require('node:process');
@@ -30,9 +31,15 @@ function commit (answer) {
  }
 
  try {
+   const filesToCommit = [README_PATH, PKG_JSON_PATH];
+
+   if (existsSync(PKG_LOCK_PATH)) {
+     filesToCommit.push(PKG_LOCK_PATH);
+   }
+
    execFileSync(
      'git',
-     ['-C', REPOSITORY_ROOT, 'add', README_PATH, PKG_JSON_PATH, PKG_LOCK_PATH],
+     ['-C', REPOSITORY_ROOT, 'add', ...filesToCommit],
      { stdio: 'inherit' }
    );
    execFileSync(

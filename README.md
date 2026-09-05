@@ -13,7 +13,7 @@ Write your code in `/src/index.js`.
 
 ## Prepare and test
 1. Install [Node.js 18 or newer](https://nodejs.org/en/download/)   
-2. Fork this repository: #
+2. Fork this repository: https://github.com/Shastel/rsapp-task-template
 3. Clone your newly created repo: https://github.com/<%your_github_username%>/<%TASK_NAME%>/  
 4. Go to the `<%TASK_NAME%>` folder  
 5. Install dependencies with [`npm install`](https://docs.npmjs.com/cli/install)  
